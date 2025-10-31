@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>سیستم حضور و غیاب – چندجلسه‌ای</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vazirmatn/33.003/Vazirmatn-font-face.min.css" rel="stylesheet" />
+  <style>
+    :root{--bg:#071021;--card:#0b1220;--accent:#06b6b4;--muted:#94a3b8;--success:#16a34a}
+    html,body{height:100%;margin:0;font-family: "Vazirmatn",system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial; background:linear-gradient(180deg,#041021 0%, #071021 100%);color:#e6eef6}
+    .app{max-width:1100px;margin:26px auto;padding:18px}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:4px 0 0;color:var(--muted);font-size:14px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:14px;margin-top:16px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+    .btn{background:var(--accent);color:#042022;border:none;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;white-space:nowrap}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .btn.danger{background:#ef4444;color:white}
+    .search{flex:1;display:flex;min-width:200px}
+    .search input{flex:1;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;font-size:14px}
+    .table-wrapper{overflow-x:auto;margin-top:8px}
+    table{width:100%;border-collapse:collapse;min-width:600px}
+    th,td{padding:10px 8px;text-align:right;border-bottom:1px dashed rgba(255,255,255,0.02);font-size:14px}
+    th{color:var(--muted);font-weight:700;font-size:13px}
+    td.name{font-weight:800}
+    .presence-btn{padding:6px 10px;border-radius:8px;border:none;cursor:pointer;font-size:13px;min-width:60px}
+    .present{background:rgba(22,163,74,0.12);color:var(--success);border:1px solid rgba(22,163,74,0.2)}
+    .absent{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)}
+    .stats{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .stat{background:rgba(255,255,255,0.02);padding:8px 12px;border-radius:10px;font-size:14px;white-space:nowrap}
+    .sessions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:1}
+    .session-chip{background:rgba(255,255,255,0.02);padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.03);cursor:pointer;font-size:13px;white-space:nowrap}
+    .session-chip.active{background:linear-gradient(90deg,var(--accent),#10b981);color:#042022;font-weight:800}
+    .file-input{display:none}
+    footer{margin-top:14px;color:var(--muted);font-size:12px;line-height:1.6}
+    .btn-group{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    
+    @media(max-width:820px){
+      .app{margin:12px;padding:12px}
+      h1{font-size:18px}
+      p.lead{font-size:13px}
+      header{gap:12px}
+      .stats{width:100%;justify-content:space-between}
+      .stat{font-size:13px;padding:6px 10px}
+      .controls{gap:6px}
+      .btn{font-size:13px;padding:6px 10px}
+      .btn-group{width:100%}
+      .btn-group .btn{flex:1}
+      .search{width:100%;min-width:auto}
+      table{font-size:13px}
+      th,td{padding:8px 6px;font-size:12px}
+      .presence-btn{padding:5px 8px;font-size:12px;min-width:50px}
+    }
+    
+    @media(max-width:600px){
+      .app{margin:8px;padding:8px}
+      h1{font-size:16px}
+      p.lead{font-size:12px}
+      .card{padding:10px}
+      .stats{gap:6px}
+      .stat{font-size:12px;padding:5px 8px}
+      .sessions{gap:6px}
+      .session-chip{font-size:12px;padding:5px 8px}
+      .btn{font-size:12px;padding:5px 8px}
+      th,td{padding:6px 4px;font-size:11px}
+      .presence-btn{font-size:11px;padding:4px 6px}
+      footer{font-size:11px}
+      table{min-width:500px}
+    }
+    
+    @media(max-width:400px){
+      h1{font-size:14px}
+      p.lead{display:none}
+      .stat span{font-weight:700}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>سیستم حضور و غیاب – چندجلسه‌ای</h1>
+        <p class="lead">جلسات نامحدود – برای هر جلسه ذخیره‌ی جداگانه. اطلاعات در مرورگر (LocalStorage) نگهداری می‌شود.</p>
+      </div>
+      <div class="stats">
+        <div class="stat">کل: <span id="total">0</span></div>
+        <div class="stat">حاضر: <span id="count-present">0</span></div>
+        <div class="stat">غایب: <span id="count-absent">0</span></div>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="controls">
+        <div class="sessions" id="sessions"></div>
+      </div>
+      
+      <div class="controls">
+        <div class="btn-group">
+          <button class="btn ghost" id="new-session">جلسه جدید</button>
+          <button class="btn ghost" id="rename-session">تغییر نام</button>
+          <button class="btn ghost" id="delete-session">حذف جلسه</button>
+        </div>
+        <div class="search">
+          <input id="search" placeholder="جستجو بر اساس نام یا نام خانوادگی..." />
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" id="mark-all-present">همه را حاضر کن</button>
+        <button class="btn ghost" id="mark-all-absent">همه را غایب کن</button>
+      </div>
+      
+      <div class="controls">
+        <div class="btn-group" style="width:100%">
+          <button class="btn" id="export-session">خروجی CSV (جلسه فعلی)</button>
+          <button class="btn ghost" id="export-all">خروجی CSV (همه جلسات)</button>
+          <label class="btn ghost" for="import-file">بارگذاری CSV</label>
+          <input type="file" id="import-file" class="file-input" accept="text/csv" />
+          <button class="btn danger" id="clear-session">پاک کردن جلسه</button>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="table">
+          <thead>
+            <tr>
+              <th style="width:60px">ردیف</th>
+              <th>نام</th>
+              <th>نام خانوادگی</th>
+              <th style="width:140px">وضعیت</th>
+              <th style="width:180px">آخرین تغییر</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <footer>
+        <div>ویژگی‌ها: جلسات نامحدود، ذخیره‌ی مستقل برای هر جلسه، جستجوی زنده، ورود/خروج CSV، آمار، چاپ صفحه. برای انتقال بین دستگاه‌ها از خروجی CSV استفاده کنید.</div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // داده‌ی پایه
+    const initialRoster = [
+      {id:1, first: 'ارسلان', last: 'اگاهیان'},
+      {id:2, first: 'ابوالفضل', last: 'امینی'},
+      {id:3, first: 'راهین', last: 'امینی'},
+      {id:4, first: 'متین', last: 'باقری'},
+      {id:5, first: 'مهرسا', last: 'بناساز'},
+      {id:6, first: 'امین', last: 'پالاش'},
+      {id:7, first: 'نیایش', last: 'پوراشرفی'},
+      {id:8, first: 'ربکا', last: 'پوراطی'},
+      {id:9, first: 'امید', last: 'خرم'},
+      {id:10, first: 'سارای', last: 'خنده رو'},
+      {id:11, first: 'علیرضا', last: 'رحیمی'},
+      {id:12, first: 'نازنین زهرا', last: 'رحیمی'},
+      {id:13, first: 'ستایش', last: 'سلطانی'},
+      {id:14, first: 'فاطمه', last: 'قشلاقی'},
+      {id:15, first: 'سادات', last: 'کمیزی'},
+      {id:16, first: 'روژین', last: 'معین'},
+      {id:17, first: 'سیدپرهام', last: 'میرفندرسکی'},
+      {id:18, first: 'مائده', last: 'نیک ائینی'}
+    ];
+
+    const SESSIONS_KEY = 'attendance_sessions_v1';
+
+    function loadSessions(){
+      const raw = localStorage.getItem(SESSIONS_KEY);
+      if(!raw) return null;
+      try{ return JSON.parse(raw); }catch(e){ console.error('خطا در خواندن جلسات'); return null; }
+    }
+
+    function saveSessions(sessions){
+      localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+    }
+
+    function ensureDefault(){
+      let sessions = loadSessions();
+      if(!sessions || sessions.length===0){
+        const now = Date.now();
+        const defaultSession = {
+          id: now,
+          name: 'جلسه‌ی 1',
+          createdAt: now,
+          roster: initialRoster.map(p=>({...p, status:'absent', ts:null}))
+        };
+        sessions = [defaultSession];
+        saveSessions(sessions);
+      }
+      return sessions;
+    }
+
+    let sessions = ensureDefault();
+    let currentSessionId = sessions[0].id;
+
+    function getSession(id){ return sessions.find(s=>s.id===id); }
+    function persist(){ saveSessions(sessions); renderSessions(); render(); }
+
+    function renderSessions(){
+      const container = document.getElementById('sessions');
+      container.innerHTML = '';
+      sessions.forEach(s=>{
+        const el = document.createElement('div');
+        el.className = 'session-chip' + (s.id===currentSessionId? ' active':'');
+        el.textContent = s.name;
+        el.title = new Date(s.createdAt).toLocaleString('fa-IR');
+        el.addEventListener('click', ()=>{ currentSessionId = s.id; renderSessions(); render(); });
+        container.appendChild(el);
+      });
+    }
+
+    function render(filter=''){
+      const tbody = document.getElementById('tbody');
+      const sess = getSession(currentSessionId);
+      if(!sess){ tbody.innerHTML = ''; return; }
+      const roster = sess.roster;
+      const filtered = roster.filter(p=>{
+        if(!filter) return true;
+        const s = (p.first + ' ' + p.last).toLowerCase();
+        return s.includes(filter.toLowerCase());
+      });
+      tbody.innerHTML = '';
+      filtered.forEach((p,idx)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.id}</td>
+          <td class="name">${escapeHtml(p.first)}</td>
+          <td>${escapeHtml(p.last)}</td>
+          <td>
+            <button class="presence-btn ${p.status==='present'?'present':'absent'}" data-id="${p.id}">${p.status==='present'?'حاضر':'غایب'}</button>
+          </td>
+          <td>${p.ts?new Date(p.ts).toLocaleString('fa-IR'):'-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const total = roster.length;
+      const presentCount = roster.filter(r=>r.status==='present').length;
+      document.getElementById('total').textContent = total;
+      document.getElementById('count-present').textContent = presentCount;
+      document.getElementById('count-absent').textContent = total - presentCount;
+
+      document.querySelectorAll('.presence-btn').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const id = Number(btn.dataset.id);
+          togglePresence(id);
+        });
+      });
+    }
+
+    function togglePresence(id){
+      const sess = getSession(currentSessionId);
+      const idx = sess.roster.findIndex(r=>r.id===id);
+      if(idx===-1) return;
+      sess.roster[idx].status = sess.roster[idx].status==='present'?'absent':'present';
+      sess.roster[idx].ts = sess.roster[idx].status==='present'?Date.now():null;
+      persist();
+    }
+
+    function markAll(status){
+      const sess = getSession(currentSessionId);
+      sess.roster.forEach(r=>{ r.status = status; r.ts = status==='present'?Date.now():null });
+      persist();
+    }
+
+    document.getElementById('new-session').addEventListener('click', ()=>{
+      const name = prompt('نام جلسه‌ی جدید را وارد کنید (مثلاً: جلسه‌ی 2):');
+      if(name===null) return;
+      const id = Date.now();
+      const s = { id, name: name.trim()||('جلسه‌ی '+(sessions.length+1)), createdAt: Date.now(), roster: initialRoster.map(p=>({...p, status:'absent', ts:null})) };
+      sessions.push(s); currentSessionId = s.id; persist();
+    });
+
+    document.getElementById('rename-session').addEventListener('click', ()=>{
+      const sess = getSession(currentSessionId);
+      if(!sess) return;
+      const name = prompt('نام جدید جلسه را وارد کنید:', sess.name);
+      if(name===null) return;
+      sess.name = name.trim()||sess.name; persist();
+    });
+
+    document.getElementById('delete-session').addEventListener('click', ()=>{
+      if(sessions.length===1){ alert('نمی‌توانید آخرین جلسه را حذف کنید. حداقل یک جلسه لازم است.'); return; }
+      if(!confirm('آیا مطمئنید می‌خواهید این جلسه و تمام داده‌های آن را حذف کنید؟')) return;
+      sessions = sessions.filter(s=>s.id!==currentSessionId);
+      currentSessionId = sessions[0].id; persist();
+    });
+
+    function exportSessionCSV(id){
+      const s = getSession(id);
+      if(!s) return;
+      const lines = ['session_id,session_name,id,first,last,status,timestamp'];
+      for(const r of s.roster){ lines.push([s.id, quoteCsv(s.name), r.id, quoteCsv(r.first), quoteCsv(r.last), r.status, r.ts?new Date(r.ts).toISOString():''].join(',')); }
+      downloadCSV(lines.join('\n'), `attendance_session_${s.id}.csv`);
+    }
+
+    function exportAllCSV(){
+      const lines = ['session_id,session_name,id,first,last,status,timestamp'];
+      sessions.forEach(s=>{
+        for(const r of s.roster){ lines.push([s.id, quoteCsv(s.name), r.id, quoteCsv(r.first), quoteCsv(r.last), r.status, r.ts?new Date(r.ts).toISOString():''].join(',')); }
+      });
+      downloadCSV(lines.join('\n'), `attendance_all_sessions.csv`);
+    }
+
+    function downloadCSV(text, filename){
+      const blob = new Blob([text],{type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('export-session').addEventListener('click', ()=>{ exportSessionCSV(currentSessionId); });
+    document.getElementById('export-all').addEventListener('click', exportAllCSV);
+
+    document.getElementById('import-file').addEventListener('change', e=>{
+      const f = e.target.files[0]; if(!f) return; const reader = new FileReader();
+      reader.onload = ev=>{ const text = ev.target.result; handleImportCsv(text); }; reader.readAsText(f,'utf-8'); e.target.value='';
+    });
+
+    function handleImportCsv(text){
+      const lines = text.split(/\r?\n/).filter(Boolean);
+      if(lines.length<2) return alert('فایل نامعتبر یا خالی است.');
+      const header = lines[0].split(',').map(h=>h.trim().toLowerCase());
+      const isFull = header.includes('session_id') && header.includes('session_name');
+      if(isFull){
+        const imported = {};
+        for(let i=1;i<lines.length;i++){ const row = parseCsvLine(lines[i]); if(row.length<6) continue; const sid = row[0]; const sname = row[1]||('imported'); const id = Number(row[2])||1; const first=row[3]||''; const last=row[4]||''; const status = (row[5]||'absent').trim(); const ts = row[6]?Date.parse(row[6]):null; if(!imported[sid]) imported[sid]={id:sid,name:sname,rows:[]}; imported[sid].rows.push({id,first,last,status:status==='present'?'present':'absent',ts:isNaN(ts)?null:ts}); }
+        for(const sid in imported){ const newSession = { id: Number(sid)||Date.now()+Math.floor(Math.random()*1000), name: imported[sid].name, createdAt: Date.now(), roster: imported[sid].rows.map((r,idx)=>({ id: idx+1, first: r.first, last: r.last, status: r.status, ts: r.ts })) }; sessions.push(newSession); }
+        persist(); alert('واردسازی کامل شد – جلسات جدید به لیست اضافه شدند.');
+      } else {
+        const rows = [];
+        for(let i=1;i<lines.length;i++){ const row = parseCsvLine(lines[i]); if(row.length<3) continue; const id = Number(row[0])|| (rows.length+1); const first = row[1]||''; const last = row[2]||''; const status = (row[3]||'absent').trim(); const ts = row[4]?Date.parse(row[4]):null; rows.push({id, first, last, status: status==='present'?'present':'absent', ts: isNaN(ts)?null:ts}); }
+        if(rows.length>0){ 
+          const sess = getSession(currentSessionId);
+          for(let i=0;i<rows.length;i++) rows[i].id = i+1;
+          sess.roster = rows; persist(); alert('واردسازی به جلسه‌ی فعلی انجام شد.');
+        }
+      }
+    }
+
+    document.getElementById('clear-session').addEventListener('click', ()=>{
+      if(!confirm('پاک‌سازی فقط برای جلسه‌ی فعلی انجام شود؟ این کار برگشت‌پذیر نیست.')) return;
+      const sess = getSession(currentSessionId);
+      sess.roster = initialRoster.map(p=>({...p, status:'absent', ts:null})); persist();
+    });
+
+    function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+    function quoteCsv(s){if(typeof s!=='string') return s; if(s.includes(',')||s.includes('"')||s.includes('\n')) return '"'+s.replace(/"/g,'""')+'"'; return s}
+    function parseCsvLine(line){ const res=[]; let cur=''; let inQuotes=false; for(let i=0;i<line.length;i++){const ch=line[i]; if(inQuotes){ if(ch==='"'){ if(line[i+1]==='"'){cur+='"'; i++;} else {inQuotes=false;} } else {cur+=ch;} } else { if(ch===','){res.push(cur); cur='';} else if(ch==='"'){inQuotes=true;} else {cur+=ch;} }} res.push(cur); return res; }
+
+    document.getElementById('search').addEventListener('input', e=>{ render(e.target.value); });
+    document.getElementById('mark-all-present').addEventListener('click', ()=>{ if(confirm('همه را حاضر کنم؟')) markAll('present'); });
+    document.getElementById('mark-all-absent').addEventListener('click', ()=>{ if(confirm('همه را غایب کنم؟')) markAll('absent'); });
+
+    (function init(){ renderSessions(); render(); document.addEventListener('keydown',(e)=>{ if(e.key==='p' && (e.ctrlKey||e.metaKey)){ e.preventDefault(); window.print(); } }); })();
+  </script>
+</body>
+</html>
